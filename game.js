@@ -10,9 +10,11 @@
   const bestEl = document.getElementById("best");
   const newGameBtn = document.getElementById("new-game");
   const luckyToggle = document.getElementById("lucky-toggle");
+  const regenBtn = document.getElementById("regen-btn");
 
   let grid;        // SIZE x SIZE of values (0 = empty)
   let prevGrid;    // snapshot of grid before the player's last move
+  let lastSpawn;   // { r, c, value } of the most recently generated tile, for Regenerate
   let score;
   let best;
   let tileLayer;   // absolutely-positioned layer holding tile elements
@@ -46,6 +48,7 @@
   function newGame() {
     grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
     prevGrid = null;
+    lastSpawn = null;
     score = 0;
     won = false;
     over = false;
@@ -132,7 +135,9 @@
 
   function addNaiveTile(cells) {
     const [r, c] = cells[Math.floor(Math.random() * cells.length)];
-    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    const v = Math.random() < 0.9 ? 2 : 4;
+    grid[r][c] = v;
+    lastSpawn = { r, c, value: v };
   }
 
   // ---- Lucky Mode -----------------------------------------------------------
@@ -161,6 +166,7 @@
     const survivors = scored.filter((s) => s.score >= maxScore - tol);
     const pick = survivors[Math.floor(Math.random() * survivors.length)];
     grid[pick.r][pick.c] = pick.value;
+    lastSpawn = { r: pick.r, c: pick.c, value: pick.value };
   }
 
   // Score a candidate (r,c,value) placement. Higher is better.
@@ -383,6 +389,7 @@
       over = true;
       showOverlay("Game over!", "lose", false);
     }
+    syncRegenUI();
   }
 
   function showOverlay(text, cls, keepPlaying) {
@@ -406,6 +413,34 @@
 
   function clearOverlay() {
     boardEl.querySelectorAll(".overlay").forEach((n) => n.remove());
+  }
+
+  // ---- regenerate ----
+  // Remove the most recently generated tile (if it's still sitting in its
+  // spawn cell, unmerged and unmoved) and spawn a fresh one via the normal
+  // mechanism. Safe no-op in every other situation: no spawn yet, the tile
+  // moved/merged away, a different tile slid into the spawn cell, or the game
+  // is over.
+  function regenerate() {
+    if (over) return;
+    if (!canRegenerate()) return;
+    const { r, c } = lastSpawn;
+    grid[r][c] = 0;
+    addRandomTile();   // sets a new lastSpawn
+    render();
+  }
+
+  // The just-generated tile is regenerable only while it's still in its spawn
+  // cell AND still holds its original value (so a different tile that slid
+  // into that cell is never mistaken for the spawn).
+  function canRegenerate() {
+    if (over || !lastSpawn) return false;
+    return grid[lastSpawn.r][lastSpawn.c] === lastSpawn.value;
+  }
+
+  function syncRegenUI() {
+    if (!regenBtn) return;
+    regenBtn.disabled = !canRegenerate();
   }
 
   // ---- lucky mode UI ----
@@ -440,6 +475,7 @@
       };
       if (e.key === "r" || e.key === "R") { newGame(); return; }
       if (e.key === "l" || e.key === "L") { toggleLucky(); return; }
+      if (e.key === "u" || e.key === "U") { regenerate(); return; }
       const dir = map[e.key];
       if (dir) { e.preventDefault(); handleMove(dir); }
     });
@@ -463,6 +499,7 @@
 
     newGameBtn.addEventListener("click", newGame);
     if (luckyToggle) luckyToggle.addEventListener("click", toggleLucky);
+    if (regenBtn) regenBtn.addEventListener("click", regenerate);
     window.addEventListener("resize", render);
   }
 
