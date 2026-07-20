@@ -9,14 +9,41 @@ A browser-based clone of the classic [2048](https://play2048.co/) puzzle game. N
 1. Use the **arrow keys** (or **WASD**) to move all tiles in a direction.
 2. Tiles with the same number merge into one, doubling the value.
 3. Reach **2048** to win — then keep going for a higher score.
-4. **Swipe** on touch devices. Press **R** to restart at any time.
+4. **Swipe** on touch devices. Press **R** to restart, **L** to toggle Lucky Mode.
+
+## Lucky Mode 🍀
+
+An optional "assisted" mode that changes *where* new tiles spawn. Instead of
+purely random placement, the game looks one to two moves ahead and prefers
+spawns that keep you alive and set up merges. Toggle it with the **🍀 Lucky**
+button or the **L** key — your choice is remembered between sessions.
+
+When on, each candidate spawn cell (and a `2` vs `4` value) is scored on:
+
+1. **Stall avoidance** — rejects placements that leave you with no legal move,
+   and penalizes placements that force you into a dead end next turn.
+2. **One-step merge enabler** — prefers a spawn that becomes immediately
+   mergeable on your next move, and favors spawning `2` (it chains and fills
+   the board more slowly than `4`).
+3. **Border preservation** — if your last move was forced and dragged a large
+   tile off the border, the new tile is placed near your *smallest* tile so the
+   move can be reversed and the big tile restored to the border.
+4. **Structure** — rewards monotonic rows/columns and corner anchors, the
+   classic 2048 strategy signals, so spawns don't wreck your board shape.
+5. **Variety** — near-optimal candidates are chosen between with weighted
+   randomness, so the game still feels fresh rather than deterministic.
+
+Lucky Mode only affects spawn placement; you still choose every move. It's a
+nudge, not a solver — it won't guarantee a win, but it stops the game from
+sabotaging you.
 
 ## Features
 
 - Smooth slide and merge animations
 - Score plus best-score, saved to `localStorage` between sessions
 - Win and game-over overlays with "keep going" / "try again"
-- Keyboard (arrows + WASD), touch/swipe, and **R**-to-restart support
+- **Lucky Mode** — look-ahead spawn placement (see above)
+- Keyboard (arrows + WASD), touch/swipe, **R**-to-restart, **L**-to-toggle-lucky
 - Responsive 4×4 board that scales to the viewport
 - Self-contained: a single HTML file plus `style.css` and `game.js`
 

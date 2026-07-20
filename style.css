@@ -76,6 +76,13 @@ h1 {
 }
 .btn:hover { background: #9f8b77; }
 
+.controls { display: flex; gap: 8px; }
+
+.btn.lucky { background: #bbada0; }
+.btn.lucky:hover { background: #c7baa9; }
+.btn.lucky.on { background: #67a85a; }
+.btn.lucky.on:hover { background: #76bd68; }
+
 .board {
   position: relative;
   background: #bbada0;
